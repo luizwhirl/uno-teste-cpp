@@ -15,7 +15,7 @@ const vector<int> numeros = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 struct Carta {
     string cor;
-    int numero; // -1 == carta +2
+    int numero; // -1 = +2, -2 = reverse, -3 = +4 
 };
 
 vector<Carta> randbaralho() {
@@ -28,19 +28,58 @@ vector<Carta> randbaralho() {
         // cartas +2
         baralho.push_back({cor, -1});
         baralho.push_back({cor, -1});
+        // cartas reverse
+        baralho.push_back({cor, -2});
+        baralho.push_back({cor, -2});
+    }
+    // cartas +4 
+    for (int i = 0; i < 4; ++i) {
+        baralho.push_back({"⚫ preta", -3});
     }
     random_shuffle(baralho.begin(), baralho.end());
     return baralho;
 }
 
 bool meuturno(const Carta& carta, const Carta& topo) {
-    return carta.cor == topo.cor || carta.numero == topo.numero || carta.numero == -1;
+    if (carta.numero == -3) return true; // +4 sempre pode ser jogado
+    return carta.cor == topo.cor || carta.numero == topo.numero;
+}
+
+string escolherCor() {
+    cout << "escolha uma cor:" << endl;
+    cout << "1: 🟥 vermelho" << endl;
+    cout << "2: 🟩 verde" << endl;
+    cout << "3: 🟦 azul" << endl;
+    cout << "4: 🟨 amarelo" << endl;
+    
+    while (true) {
+        string escolha;
+        cin >> escolha;
+        try {
+            int cor_num = stoi(escolha);
+            if (cor_num >= 1 && cor_num <= 4) {
+                return cores[cor_num - 1];
+            } else {
+                cout << "escolha de 1 a 4" << endl;
+            }
+        } catch (...) {
+            cout << "bote um número, deixe de ser lerdo" << endl;
+        }
+    }
+}
+
+string escolherCorPC() {
+    return cores[rand() % 4];
 }
 
 void mostrarmao(const vector<Carta>& mao) {
     cout << "0: Comprar carta" << endl;
     for (size_t i = 0; i < mao.size(); ++i) {
-        string desc = (mao[i].numero == -1) ? "+2" : to_string(mao[i].numero);
+        string desc;
+        if (mao[i].numero == -1) desc = "+2";
+        else if (mao[i].numero == -2) desc = "reverse";
+        else if (mao[i].numero == -3) desc = "+4";
+        else desc = to_string(mao[i].numero);
         cout << (i + 1) << ": " << mao[i].cor << " " << desc << endl;
     }
 }
@@ -61,12 +100,23 @@ void jogar() {
 
     Carta topo = baralho.back();
     baralho.pop_back();
+    
+    // Se a primeira carta for especial, pegar outra
+    while (topo.numero < 0) {
+        baralho.insert(baralho.begin(), topo);
+        random_shuffle(baralho.begin(), baralho.end());
+        topo = baralho.back();
+        baralho.pop_back();
+    }
 
     int turno = 0; // 0 = eu, 1 = pc
+    int direcao = 1; // 1 = normal, -1 = reverso (em jogo de 2 não muda nada, mas fica aí)
 
     while (true) {
         cout << "\na carta na mesa é " << topo.cor << " ";
         if (topo.numero == -1) cout << "+2" << endl;
+        else if (topo.numero == -2) cout << "reverse" << endl;
+        else if (topo.numero == -3) cout << "+4" << endl;
         else cout << topo.numero << endl;
 
         if (turno == 0) {
@@ -93,18 +143,33 @@ void jogar() {
                                 baralho.pop_back();
                                 cout << "comprasse " << nova_carta.cor << " ";
                                 if (nova_carta.numero == -1) cout << "+2" << endl;
+                                else if (nova_carta.numero == -2) cout << "reverse" << endl;
+                                else if (nova_carta.numero == -3) cout << "+4" << endl;
                                 else cout << nova_carta.numero << endl;
 
                                 if (meuturno(nova_carta, topo)) {
                                     cout << "jogou essa mermo, seloco" << endl;
                                     topo = nova_carta;
+                                    
                                     if (topo.numero == -1) {
-                                        cout << "Pc compra e se fodeeee" << endl;
+                                        cout << "PC compra 2 e se fodeeee" << endl;
                                         for (int i = 0; i < 2 && !baralho.empty(); ++i) {
                                             mao_pc.push_back(baralho.back());
                                             baralho.pop_back();
                                         }
-                                        turno = 0; // volta a ser o meu turno
+                                        turno = 0;
+                                    } else if (topo.numero == -2) {
+                                        cout << "reverse! mas como é só 2 jogadores, continua sendo seu turno kkk" << endl;
+                                        turno = 0;
+                                    } else if (topo.numero == -3) {
+                                        topo.cor = escolherCor();
+                                        cout << "mudou pra " << topo.cor << endl;
+                                        cout << "PC compra 4 cartas e se fode" << endl;
+                                        for (int i = 0; i < 4 && !baralho.empty(); ++i) {
+                                            mao_pc.push_back(baralho.back());
+                                            baralho.pop_back();
+                                        }
+                                        turno = 0;
                                     } else {
                                         turno = 1;
                                     }
@@ -123,6 +188,8 @@ void jogar() {
                                 topo = mao_eu[index];
                                 cout << "você jogou " << topo.cor << " ";
                                 if (topo.numero == -1) cout << "+2" << endl;
+                                else if (topo.numero == -2) cout << "reverse" << endl;
+                                else if (topo.numero == -3) cout << "+4" << endl;
                                 else cout << topo.numero << endl;
                                 mao_eu.erase(mao_eu.begin() + index);
 
@@ -132,7 +199,19 @@ void jogar() {
                                         mao_pc.push_back(baralho.back());
                                         baralho.pop_back();
                                     }
-                                    turno = 0; // volta a ser meu turno
+                                    turno = 0;
+                                } else if (topo.numero == -2) {
+                                    cout << "reverse! mas como é só vocês dois, continua sendo seu turno" << endl;
+                                    turno = 0;
+                                } else if (topo.numero == -3) {
+                                    topo.cor = escolherCor();
+                                    cout << "mudou pra " << topo.cor << endl;
+                                    cout << "PC compra 4 cartas e perde a vez" << endl;
+                                    for (int i = 0; i < 4 && !baralho.empty(); ++i) {
+                                        mao_pc.push_back(baralho.back());
+                                        baralho.pop_back();
+                                    }
+                                    turno = 0;
                                 } else {
                                     turno = 1;
                                 }
@@ -154,6 +233,8 @@ void jogar() {
                     baralho.pop_back();
                     cout << "tu comprasse " << nova_carta.cor << " ";
                     if (nova_carta.numero == -1) cout << "+2" << endl;
+                    else if (nova_carta.numero == -2) cout << "reverse" << endl;
+                    else if (nova_carta.numero == -3) cout << "+4" << endl;
                     else cout << nova_carta.numero << endl;
 
                     if (meuturno(nova_carta, topo)) {
@@ -162,6 +243,18 @@ void jogar() {
                         if (topo.numero == -1) {
                             cout << "PC compra 2 e se fode" << endl;
                             for (int i = 0; i < 2 && !baralho.empty(); ++i) {
+                                mao_pc.push_back(baralho.back());
+                                baralho.pop_back();
+                            }
+                            turno = 0;
+                        } else if (topo.numero == -2) {
+                            cout << "reverse! joga de novo besta" << endl;
+                            turno = 0;
+                        } else if (topo.numero == -3) {
+                            topo.cor = escolherCor();
+                            cout << "mudou pra " << topo.cor << endl;
+                            cout << "PC compra 4 e se fode" << endl;
+                            for (int i = 0; i < 4 && !baralho.empty(); ++i) {
                                 mao_pc.push_back(baralho.back());
                                 baralho.pop_back();
                             }
@@ -192,6 +285,8 @@ void jogar() {
                     topo = mao_pc[i];
                     cout << "PC jogou " << topo.cor << " ";
                     if (topo.numero == -1) cout << "+2" << endl;
+                    else if (topo.numero == -2) cout << "reverse" << endl;
+                    else if (topo.numero == -3) cout << "+4" << endl;
                     else cout << topo.numero << endl;
                     mao_pc.erase(mao_pc.begin() + i);
                     jogou = true;
@@ -202,7 +297,19 @@ void jogar() {
                             mao_eu.push_back(baralho.back());
                             baralho.pop_back();
                         }
-                        turno = 1; // lá vai esse corno jogar de novo, parece até que o jogo é dele
+                        turno = 1;
+                    } else if (topo.numero == -2) {
+                        cout << "PC jogou reverse! continua sendo a vez dele" << endl;
+                        turno = 1;
+                    } else if (topo.numero == -3) {
+                        topo.cor = escolherCorPC();
+                        cout << "PC mudou a cor pra " << topo.cor << endl;
+                        cout << "você compra 4 cartas e perde a vez" << endl;
+                        for (int j = 0; j < 4 && !baralho.empty(); ++j) {
+                            mao_eu.push_back(baralho.back());
+                            baralho.pop_back();
+                        }
+                        turno = 1;
                     } else {
                         turno = 0;
                     }
@@ -219,11 +326,25 @@ void jogar() {
                     topo = nova_carta;
                     cout << "PC jogou " << topo.cor << " ";
                     if (topo.numero == -1) cout << "+2" << endl;
+                    else if (topo.numero == -2) cout << "reverse" << endl;
+                    else if (topo.numero == -3) cout << "+4" << endl;
                     else cout << topo.numero << endl;
-                    // sendo +2
+                    
                     if (topo.numero == -1) {
                         cout << "você compra 2 e perde a vez" << endl;
                         for (int j = 0; j < 2 && !baralho.empty(); ++j) {
+                            mao_eu.push_back(baralho.back());
+                            baralho.pop_back();
+                        }
+                        turno = 1;
+                    } else if (topo.numero == -2) {
+                        cout << "PC jogou reverse, vez dele dinovo" << endl;
+                        turno = 1;
+                    } else if (topo.numero == -3) {
+                        topo.cor = escolherCorPC();
+                        cout << "PC mudou a cor pra " << topo.cor << endl;
+                        cout << "você compra 4 e perde a vez" << endl;
+                        for (int j = 0; j < 4 && !baralho.empty(); ++j) {
                             mao_eu.push_back(baralho.back());
                             baralho.pop_back();
                         }
