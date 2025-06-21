@@ -15,7 +15,7 @@ const vector<int> numeros = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 struct Carta {
     string cor;
-    int numero; // -1 = +2, -2 = reverse, -3 = +4 
+    int numero; // -1 = +2, -2 = reverse, -3 = +4, -4 = bloquear, -5 = mudar cor
 };
 
 vector<Carta> randbaralho() {
@@ -31,17 +31,24 @@ vector<Carta> randbaralho() {
         // cartas reverse
         baralho.push_back({cor, -2});
         baralho.push_back({cor, -2});
+        // cartas bloquear
+        baralho.push_back({cor, -4});
+        baralho.push_back({cor, -4});
     }
     // cartas +4 
     for (int i = 0; i < 4; ++i) {
         baralho.push_back({"⚫ preta", -3});
+    }
+    // cartas mudar cor
+    for (int i = 0; i < 4; ++i) {
+        baralho.push_back({"⚫ preta", -5});
     }
     random_shuffle(baralho.begin(), baralho.end());
     return baralho;
 }
 
 bool meuturno(const Carta& carta, const Carta& topo) {
-    if (carta.numero == -3) return true; // +4 sempre pode ser jogado
+    if (carta.numero == -3 || carta.numero == -5) return true; // +4 e mudar cor sempre podem ser jogados
     return carta.cor == topo.cor || carta.numero == topo.numero;
 }
 
@@ -79,6 +86,8 @@ void mostrarmao(const vector<Carta>& mao) {
         if (mao[i].numero == -1) desc = "+2";
         else if (mao[i].numero == -2) desc = "reverse";
         else if (mao[i].numero == -3) desc = "+4";
+        else if (mao[i].numero == -4) desc = "bloquear";
+        else if (mao[i].numero == -5) desc = "mudar cor";
         else desc = to_string(mao[i].numero);
         cout << (i + 1) << ": " << mao[i].cor << " " << desc << endl;
     }
@@ -101,7 +110,7 @@ void jogar() {
     Carta topo = baralho.back();
     baralho.pop_back();
     
-    // Se a primeira carta for especial, pegar outra
+    // se caso a primeira carta for uma especial, vai pegar ota
     while (topo.numero < 0) {
         baralho.insert(baralho.begin(), topo);
         random_shuffle(baralho.begin(), baralho.end());
@@ -113,11 +122,14 @@ void jogar() {
     int direcao = 1; // 1 = normal, -1 = reverso (em jogo de 2 não muda nada, mas fica aí)
 
     while (true) {
-        cout << "\na carta na mesa é " << topo.cor << " ";
+        cout << "A primeira carta na mesa é: " << topo.cor << " ";
         if (topo.numero == -1) cout << "+2" << endl;
         else if (topo.numero == -2) cout << "reverse" << endl;
         else if (topo.numero == -3) cout << "+4" << endl;
+        else if (topo.numero == -4) cout << "bloquear" << endl;
+        else if (topo.numero == -5) cout << "mudar cor" << endl;
         else cout << topo.numero << endl;
+
 
         if (turno == 0) {
             cout << "\nseu turno" << endl;
@@ -145,6 +157,8 @@ void jogar() {
                                 if (nova_carta.numero == -1) cout << "+2" << endl;
                                 else if (nova_carta.numero == -2) cout << "reverse" << endl;
                                 else if (nova_carta.numero == -3) cout << "+4" << endl;
+                                else if (nova_carta.numero == -4) cout << "bloquear" << endl;
+                                else if (nova_carta.numero == -5) cout << "mudar cor" << endl;
                                 else cout << nova_carta.numero << endl;
 
                                 if (meuturno(nova_carta, topo)) {
@@ -170,6 +184,13 @@ void jogar() {
                                             baralho.pop_back();
                                         }
                                         turno = 0;
+                                    } else if (topo.numero == -4) {
+                                        cout << "PC foi bloqueado! joga de novo" << endl;
+                                        turno = 0;
+                                    } else if (topo.numero == -5) {
+                                        topo.cor = escolherCor();
+                                        cout << "mudou pra " << topo.cor << endl;
+                                        turno = 1;
                                     } else {
                                         turno = 1;
                                     }
@@ -190,6 +211,8 @@ void jogar() {
                                 if (topo.numero == -1) cout << "+2" << endl;
                                 else if (topo.numero == -2) cout << "reverse" << endl;
                                 else if (topo.numero == -3) cout << "+4" << endl;
+                                else if (topo.numero == -4) cout << "bloquear" << endl;
+                                else if (topo.numero == -5) cout << "mudar cor" << endl;
                                 else cout << topo.numero << endl;
                                 mao_eu.erase(mao_eu.begin() + index);
 
@@ -212,6 +235,13 @@ void jogar() {
                                         baralho.pop_back();
                                     }
                                     turno = 0;
+                                } else if (topo.numero == -4) {
+                                    cout << "PC bloqueado! você joga de novo kkkkk" << endl;
+                                    turno = 0;
+                                } else if (topo.numero == -5) {
+                                    topo.cor = escolherCor();
+                                    cout << "mudou pra " << topo.cor << endl;
+                                    turno = 1;
                                 } else {
                                     turno = 1;
                                 }
@@ -235,6 +265,8 @@ void jogar() {
                     if (nova_carta.numero == -1) cout << "+2" << endl;
                     else if (nova_carta.numero == -2) cout << "reverse" << endl;
                     else if (nova_carta.numero == -3) cout << "+4" << endl;
+                    else if (nova_carta.numero == -4) cout << "bloquear" << endl;
+                    else if (nova_carta.numero == -5) cout << "mudar cor" << endl;
                     else cout << nova_carta.numero << endl;
 
                     if (meuturno(nova_carta, topo)) {
@@ -259,6 +291,13 @@ void jogar() {
                                 baralho.pop_back();
                             }
                             turno = 0;
+                        } else if (topo.numero == -4) {
+                            cout << "PC bloqueado, sua vez de novo" << endl;
+                            turno = 0;
+                        } else if (topo.numero == -5) {
+                            topo.cor = escolherCor();
+                            cout << "mudou pra " << topo.cor << endl;
+                            turno = 1;
                         } else {
                             turno = 1;
                         }
@@ -287,6 +326,8 @@ void jogar() {
                     if (topo.numero == -1) cout << "+2" << endl;
                     else if (topo.numero == -2) cout << "reverse" << endl;
                     else if (topo.numero == -3) cout << "+4" << endl;
+                    else if (topo.numero == -4) cout << "bloquear" << endl;
+                    else if (topo.numero == -5) cout << "mudar cor" << endl;
                     else cout << topo.numero << endl;
                     mao_pc.erase(mao_pc.begin() + i);
                     jogou = true;
@@ -310,6 +351,13 @@ void jogar() {
                             baralho.pop_back();
                         }
                         turno = 1;
+                    } else if (topo.numero == -4) {
+                        cout << "você foi bloqueado! PC joga de novo" << endl;
+                        turno = 1;
+                    } else if (topo.numero == -5) {
+                        topo.cor = escolherCorPC();
+                        cout << "PC mudou a cor pra " << topo.cor << endl;
+                        turno = 0;
                     } else {
                         turno = 0;
                     }
@@ -328,6 +376,8 @@ void jogar() {
                     if (topo.numero == -1) cout << "+2" << endl;
                     else if (topo.numero == -2) cout << "reverse" << endl;
                     else if (topo.numero == -3) cout << "+4" << endl;
+                    else if (topo.numero == -4) cout << "bloquear" << endl;
+                    else if (topo.numero == -5) cout << "mudar cor" << endl;
                     else cout << topo.numero << endl;
                     
                     if (topo.numero == -1) {
@@ -349,6 +399,13 @@ void jogar() {
                             baralho.pop_back();
                         }
                         turno = 1;
+                    } else if (topo.numero == -4) {
+                        cout << "você foi bloqueado, PC joga de novo" << endl;
+                        turno = 1;
+                    } else if (topo.numero == -5) {
+                        topo.cor = escolherCorPC();
+                        cout << "PC mudou a cor pra " << topo.cor << endl;
+                        turno = 0;
                     } else {
                         turno = 0;
                     }
