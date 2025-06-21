@@ -18,6 +18,25 @@ struct Carta {
     int numero; // -1 = +2, -2 = reverse, -3 = +4, -4 = bloquear, -5 = mudar cor
 };
 
+bool cinOK() {
+    if (cin.eof() || cin.fail()) {
+        cout << "\ntchaudisgrasa" << endl;
+        return false;
+    }
+    return true;
+}
+
+
+bool lerEntrada(string& entrada) {
+    if (!getline(cin, entrada)) {
+        if (cin.eof()) {
+            cout << "\nPrograma interrompido. Tchau!" << endl;
+            return false;
+        }
+    }
+    return true;
+}
+
 vector<Carta> randbaralho() {
     vector<Carta> baralho;
     for (const auto& cor : cores) {
@@ -61,7 +80,10 @@ string escolherCor() {
     
     while (true) {
         string escolha;
-        cin >> escolha;
+        if (!lerEntrada(escolha)) {
+            exit(0);
+        }
+        
         try {
             int cor_num = stoi(escolha);
             if (cor_num >= 1 && cor_num <= 4) {
@@ -130,7 +152,6 @@ void jogar() {
         else if (topo.numero == -5) cout << "mudar cor" << endl;
         else cout << topo.numero << endl;
 
-
         if (turno == 0) {
             cout << "\nseu turno" << endl;
             mostrarmao(mao_eu);
@@ -145,7 +166,9 @@ void jogar() {
             if (!jogadas_validas.empty()) {
                 while (true) {
                     string escolha;
-                    cin >> escolha;
+                    if (!lerEntrada(escolha)) {
+                        return;
+                    }
 
                     try {
                         int escolha_num = stoi(escolha);
