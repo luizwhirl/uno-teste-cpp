@@ -7,6 +7,7 @@
 #include <limits>
 #include <locale>
 #include <windows.h>
+#include <random>
 
 using namespace std;
 
@@ -54,15 +55,17 @@ vector<Carta> randbaralho() {
         baralho.push_back({cor, -4});
         baralho.push_back({cor, -4});
     }
-    // cartas +4 
     for (int i = 0; i < 4; ++i) {
         baralho.push_back({"⚫ preta", -3});
     }
-    // cartas mudar cor
     for (int i = 0; i < 4; ++i) {
         baralho.push_back({"⚫ preta", -5});
     }
-    random_shuffle(baralho.begin(), baralho.end());
+
+    random_device rd;
+    mt19937 g(rd());
+    shuffle(baralho.begin(), baralho.end(), g);
+
     return baralho;
 }
 
@@ -450,8 +453,9 @@ void jogar() {
 }
 
 int main() {
-    SetConsoleOutputCP(CP_UTF8); 
-    setlocale(LC_ALL, "pt_BR.utf8"); 
+    SetConsoleOutputCP(65001); 
+    setlocale(LC_ALL, "");
+
     jogar();
     return 0;
 }
