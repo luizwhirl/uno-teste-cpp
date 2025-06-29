@@ -4,6 +4,3 @@ g++ -o uno main.cpp
 uno.exe
 
 ctrl + c
-
-
-asoifhOIGHDDSOIJDF
